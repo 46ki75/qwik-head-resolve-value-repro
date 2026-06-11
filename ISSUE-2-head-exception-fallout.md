@@ -13,7 +13,7 @@ If a route's `head()` function throws during **client-side (SPA) navigation**, Q
 The fallout cascades:
 
 1. In dev mode, every QRL chunk that imports CSS now fails to load: Vite's injected `updateStyle` calls `document.head.appendChild(...)` and throws `TypeError: Cannot read properties of null (reading 'appendChild')`.
-2. Qwik does not cache the rejected QRL import (`LazyRef.$setRef$` resets `$ref$` to `null` on rejection, "we can try again later"), so the failed chunk is retried in a tight loop (~every 250 ms), forever. The console accumulates **tens of thousands of errors within seconds** and the page is permanently wedged — no styles, no further interactivity, navigation dead.
+2. Qwik does not cache the rejected QRL import (`LazyRef.$setRef$` resets `$ref$` to `null` on rejection, "we can try again later"), so the failed chunk is retried in a tight loop (~every 250 ms), forever. The console accumulates tens of thousands of errors within seconds and the page is permanently wedged — no styles, no further interactivity, navigation dead.
 
 A user-code exception in a head function arguably shouldn't be able to destroy the document or hang the app. Note this is easy to hit accidentally: a companion issue ("`resolveValue()` returns `undefined` inside `head()` during SPA navigation") shows the router itself handing `head()` an `undefined` loader value, so any non-defensive head function ends up here.
 
@@ -21,12 +21,6 @@ A user-code exception in a head function arguably shouldn't be able to destroy t
 
 - An exception in `head()` is contained: log it, keep (or restore) the previous `<head>` element, and continue. The document must never be left without a `<head>`.
 - A QRL whose import keeps failing should back off or give up rather than retry in an unbounded tight loop.
-
-I'm reporting this only; I'm not planning to submit a PR.
-
-### Reproduction
-
-<https://github.com/46ki75/qwik-head-resolve-value-repro>
 
 ### Steps to reproduce
 
@@ -64,17 +58,24 @@ Manual alternative: `pnpm dev`, click the "/crash/" link, watch `document.head` 
 ### System Info
 
 ```shell
-@qwik.dev/core:   2.0.0-beta.37
-@qwik.dev/router: 2.0.0-beta.37
-vite:             7.3.2
-node:             24.16.0
-pnpm:             10.33.0
-OS:               Linux (WSL2)
-Browser:          Chromium (headless and headed)
+System:
+  OS: Linux 6.6 Ubuntu 24.04.4 LTS 24.04.4 LTS (Noble Numbat)
+  CPU: (16) x64 Intel(R) Core(TM) Ultra 7 255H
+  Memory: 11.95 GB / 15.31 GB
+  Container: Yes
+  Shell: 5.2.21 - /bin/bash
+Binaries:
+  Node: 24.14.1 - /home/ikuma/.volta/tools/image/node/24.14.1/bin/node
+  npm: 11.11.0 - /home/ikuma/.volta/tools/image/node/24.14.1/bin/npm
+  pnpm: 10.33.0 - /home/ikuma/.volta/bin/pnpm
+Browsers:
+  Chrome: 148.0.7778.167
+npmPackages:
+  typescript: 5.8.3 => 5.8.3
+  vite: 7.3.2 => 7.3.2
 ```
 
 ### Additional Information
 
 - The retry loop lives in `LazyRef.$setRef$` (`@qwik.dev/core`, `qrl-class`): on rejection it logs `qrl <symbol> failed to load` and resets the ref so the next render attempt re-imports — with a permanently broken document, that never converges.
 - The two issues compound: the companion bug supplies the exception, this bug turns it into a full page failure. Fixing either materially reduces the severity of the other, but both are worth fixing independently.
-- Related but not a duplicate: #8634 (QRL chunks fail to load on cold Vite dev SSR) shares the `qrl ... failed to load` + retry-loop tail, but its root cause is Vite dep-optimization returning `504 Outdated Optimize Dep`, not a `null` `document.head`.

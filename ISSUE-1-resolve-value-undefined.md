@@ -29,8 +29,6 @@ Because any dereference of the loader value throws, the practical impact is a cr
   is resolved (v1 behavior, matches the current type), or
 - the transient state is made explicit: type it `T | undefined` during client-side navigation and document that `head()` re-resolves once the loader signal lands.
 
-I'm reporting this only; I'm not planning to submit a PR.
-
 ### Reproduction
 
 <https://github.com/46ki75/qwik-head-resolve-value-repro>
@@ -61,13 +59,21 @@ Manual alternative: `pnpm dev`, open the page, and click the "Go to /other/" lin
 ### System Info
 
 ```shell
-@qwik.dev/core:   2.0.0-beta.37
-@qwik.dev/router: 2.0.0-beta.37
-vite:             7.3.2
-node:             24.16.0
-pnpm:             10.33.0
-OS:               Linux (WSL2)
-Browser:          Chromium (headless and headed)
+System:
+  OS: Linux 6.6 Ubuntu 24.04.4 LTS 24.04.4 LTS (Noble Numbat)
+  CPU: (16) x64 Intel(R) Core(TM) Ultra 7 255H
+  Memory: 11.95 GB / 15.31 GB
+  Container: Yes
+  Shell: 5.2.21 - /bin/bash
+Binaries:
+  Node: 24.14.1 - /home/ikuma/.volta/tools/image/node/24.14.1/bin/node
+  npm: 11.11.0 - /home/ikuma/.volta/tools/image/node/24.14.1/bin/npm
+  pnpm: 10.33.0 - /home/ikuma/.volta/bin/pnpm
+Browsers:
+  Chrome: 148.0.7778.167
+npmPackages:
+  typescript: 5.8.3 => 5.8.3
+  vite: 7.3.2 => 7.3.2
 ```
 
 ### Additional Information
@@ -84,5 +90,3 @@ Browser:          Chromium (headless and headed)
     return { title: data.title };
   };
   ```
-
-- Related but not a duplicate: #4427 (`resolveValue(useAction)` returns `undefined` in `routeLoader$`) — same "resolveValue returns undefined" symptom in a different context (action inside a loader, pre-v2 reactive head).
