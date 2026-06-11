@@ -6,7 +6,7 @@ Qwik City (routing)
 
 ### Describe the bug
 
-Reading a route loader from a `head` function via `resolveValue()` — the documented pattern for dynamic `<title>` / OG tags — can return `undefined` during **client-side (SPA) navigation**, even though `ResolveSyncValue`'s return type promises the loader's value.
+Reading a route loader from a `head` function via `resolveValue()` — the typed, intended way to read loader data in `head` (`DocumentHeadProps.resolveValue`), and the documented pattern for dynamic `<title>` / OG tags in v1 — can return `undefined` during **client-side (SPA) navigation**, even though `ResolveSyncValue`'s loader overload promises the loader's value (`Awaited<T>`, not `Awaited<T> | undefined`).
 
 ```tsx
 export const useUrl = routeLoader$(({ url }) => url.toString());
